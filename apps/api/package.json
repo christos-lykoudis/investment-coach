@@ -11,6 +11,7 @@
     "test:e2e": "jest --config jest.config.js"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.80.0",
     "@nestjs/common": "^11.1.17",
     "@nestjs/config": "^4.0.3",
     "@nestjs/core": "^11.1.17",
@@ -26,7 +27,6 @@
     "cors": "^2.8.6",
     "dotenv": "^17.3.1",
     "jsonwebtoken": "^9.0.3",
-    "openai": "^6.32.0",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "reflect-metadata": "^0.2.2",

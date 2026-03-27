@@ -8,6 +8,7 @@ import {
 } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { syncBrokerOnce } from "../workers/sync-broker.worker";
+import { MarketDataService } from "./market-data.service";
 
 const parseDateOr = (value: string | undefined, fallback: Date): Date => {
   if (!value) return fallback;
@@ -18,7 +19,10 @@ const parseDateOr = (value: string | undefined, fallback: Date): Date => {
 
 @Injectable()
 export class PortfolioService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly marketData: MarketDataService
+  ) {}
 
   async getOverview(userId: string) {
     const snapshot = await this.prisma.portfolioSnapshot.findFirst({
@@ -48,6 +52,9 @@ export class PortfolioService {
       where: { portfolioSnapshotId: snapshot.id },
       orderBy: { marketValue: "desc" }
     });
+    const quotesBySymbol = await this.marketData.getLatestPrices(
+      positions.map((position) => position.symbol)
+    );
 
     return {
       positions: positions.map((position) => ({
@@ -55,7 +62,12 @@ export class PortfolioService {
         weight: position.weight,
         sector: position.sector,
         marketValue: position.marketValue,
-        unrealizedPnL: position.unrealizedPnL
+        unrealizedPnL: position.unrealizedPnL,
+        currentPrice: quotesBySymbol[position.symbol] ?? null,
+        estimatedShares:
+          quotesBySymbol[position.symbol] && quotesBySymbol[position.symbol] > 0
+            ? position.marketValue / quotesBySymbol[position.symbol]
+            : null
       }))
     };
   }

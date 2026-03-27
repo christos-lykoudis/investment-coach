@@ -5,6 +5,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { tokenStore } from '../lib/tokens';
 import { ToastContainer } from 'react-toastify';
+import { LoadingScreen } from '../components/LoadingScreen';
 
 export default function LandingPage() {
   const router = useRouter();
@@ -24,7 +25,7 @@ export default function LandingPage() {
   }, [router]);
 
   if (!checked) {
-    return <div className='px-5 py-12 text-(--muted)'>Loading…</div>;
+    return <LoadingScreen />;
   }
 
   return (

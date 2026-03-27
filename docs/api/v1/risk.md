@@ -27,6 +27,15 @@ Returns latest risk metrics.
 }
 ```
 
+### Risk metric meanings
+
+- `concentrationScore`: Normalized single-name concentration score (0-1), where higher means your portfolio is more concentrated in one position.
+- `sectorConcentration`: Weight of your largest sector allocation (0-1), showing how much one sector dominates your portfolio.
+- `topHoldingWeight`: Weight of your single largest holding (0-1), indicating single-stock concentration risk.
+- `volatilityEstimate`: Estimated short-term return variability (0-1), where higher values imply larger expected swings.
+- `drawdownEstimate`: Estimated downside severity in adverse periods (0-1), where higher means deeper potential losses.
+- `diversificationScore`: Portfolio diversification score (0-1), where higher indicates broader spread across holdings.
+
 ## GET `/api/v1/risk/history`
 
 Trend chart data for risk metrics.

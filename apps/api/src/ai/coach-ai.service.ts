@@ -1,4 +1,4 @@
-import OpenAI from "openai";
+import Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
 
 const RiskExplanationSchema = z.object({
@@ -40,15 +40,15 @@ const WeeklyBriefSchema = z.object({
 type WeeklyBrief = z.infer<typeof WeeklyBriefSchema>;
 
 export class CoachAiService {
-  private readonly openai?: OpenAI;
+  private readonly anthropic?: Anthropic;
   private readonly model: string;
 
   constructor() {
-    const apiKey = process.env.OPENAI_API_KEY;
+    const apiKey = process.env.ANTHROPIC_API_KEY;
     if (apiKey) {
-      this.openai = new OpenAI({ apiKey });
+      this.anthropic = new Anthropic({ apiKey });
     }
-    this.model = process.env.OPENAI_MODEL ?? "gpt-4o-mini";
+    this.model = process.env.ANTHROPIC_MODEL ?? "claude-3-5-sonnet-latest";
   }
 
   async generateRiskExplanation(input: {
@@ -76,7 +76,7 @@ export class CoachAiService {
       not_relevant_count?: number;
     };
   }): Promise<RiskExplanation> {
-    if (!this.openai) return this.fallbackRiskExplanation(input);
+    if (!this.anthropic) return this.fallbackRiskExplanation(input);
 
     const systemPrompt = `You are an investment risk explanation assistant.
 You never provide direct trade orders.
@@ -110,7 +110,7 @@ Return output JSON only.`;
       not_relevant_count?: number;
     };
   }): Promise<BehavioralCoaching> {
-    if (!this.openai) {
+    if (!this.anthropic) {
       return this.fallbackBehavioralCoaching(input);
     }
 
@@ -136,7 +136,7 @@ Return output JSON only.`;
     user_profile: { risk_tolerance: string; horizon: string };
     portfolio_stats: { value_change_pct: number; top_holding_weight: number };
   }): Promise<WeeklyBrief> {
-    if (!this.openai) return this.fallbackWeeklyBrief(input);
+    if (!this.anthropic) return this.fallbackWeeklyBrief(input);
 
     const systemPrompt = `Generate a concise weekly investment decision brief.
 Audience: retail investor.
@@ -158,17 +158,26 @@ Return output JSON only.`;
     userPrompt: string,
     schema: z.ZodType<T>
   ): Promise<T> {
-    const resp = await this.openai!.chat.completions.create({
+    const messageResponse = await this.anthropic!.messages.create({
       model: this.model,
+      system: systemPrompt,
       messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt }
+        {
+          role: "user",
+          content: userPrompt
+        }
       ],
-      temperature: 0.2
+      temperature: 0.2,
+      max_tokens: 1200
     });
 
-    const text = resp.choices[0]?.message?.content ?? "";
-    const parsed = this.extractAndParseJson(text);
+    let responseText = "";
+    for (const contentBlock of messageResponse.content) {
+      if (contentBlock.type === "text") {
+        responseText += contentBlock.text;
+      }
+    }
+    const parsed = this.extractAndParseJson(responseText);
     return schema.parse(parsed);
   }
 

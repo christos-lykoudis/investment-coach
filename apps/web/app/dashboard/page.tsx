@@ -8,6 +8,7 @@ import { apiGet } from '../../lib/api';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Holding } from '../../components/ui/Holding';
+import { HoverInfo } from '../../components/ui/HoverInfo';
 import { ArrowDownRight, ArrowUpRight } from 'lucide-react';
 import {
   currencyFormatter,
@@ -30,6 +31,8 @@ type PositionsResponse = {
     sector: string | null;
     marketValue: number;
     unrealizedPnL: number;
+    currentPrice: number | null;
+    estimatedShares: number | null;
   }>;
 };
 
@@ -145,6 +148,47 @@ function Dashboard() {
     }
   };
 
+  const riskMetricRows = riskSnapshot
+    ? [
+        {
+          label: 'Concentration Score',
+          value: `${(riskSnapshot.concentrationScore * 100).toFixed(1)}%`,
+          description:
+            'Normalized single-name concentration score. Higher means your portfolio is more concentrated in one position.',
+        },
+        {
+          label: 'Top Holding Weight',
+          value: `${(riskSnapshot.topHoldingWeight * 100).toFixed(1)}%`,
+          description:
+            'Portfolio weight of your largest individual holding. Higher values imply more single-stock dependence.',
+        },
+        {
+          label: 'Sector Concentration',
+          value: `${(riskSnapshot.sectorConcentration * 100).toFixed(1)}%`,
+          description:
+            'Weight of your largest sector exposure. Higher values mean one sector drives more outcomes.',
+        },
+        {
+          label: 'Volatility Estimate',
+          value: riskSnapshot.volatilityEstimate.toFixed(2),
+          description:
+            'Estimated near-term variability in returns. Higher values imply larger expected price swings.',
+        },
+        {
+          label: 'Drawdown Estimate',
+          value: riskSnapshot.drawdownEstimate.toFixed(2),
+          description:
+            'Estimated downside severity in adverse conditions. Higher values indicate deeper potential declines.',
+        },
+        {
+          label: 'Diversification Score',
+          value: `${(riskSnapshot.diversificationScore * 100).toFixed(1)}%`,
+          description:
+            'How spread out your portfolio is across holdings. Higher values usually indicate better diversification.',
+        },
+      ]
+    : [];
+
   return (
     <div className='grid gap-4'>
       <div className='flex items-center gap-2.5'>
@@ -181,6 +225,11 @@ function Dashboard() {
                 Unrealized Result
               </p>
               <div className={pnlColorClass(overview.totalPnL)}>
+                {overview.totalPnL > 0 ? (
+                  <ArrowUpRight className='inline-block' />
+                ) : (
+                  <ArrowDownRight className='inline-block' />
+                )}
                 {percentFormatter.format(
                   overview.totalPnL / overview.totalValue,
                 )}
@@ -189,12 +238,23 @@ function Dashboard() {
           ) : null}
         </Card>
 
-        <Card title='Top holding weight'>
+        {/* <Card title='Top holding weight'>
           {riskSnapshot ? (
             <div className='text-lg font-bold'>
               {(riskSnapshot.topHoldingWeight * 100).toFixed(1)}%
             </div>
           ) : null}
+        </Card> */}
+        <Card title='Risk Snapshot'>
+          <div className='grid gap-2.5 text-(--muted)'>
+            {riskMetricRows.map((metric) => (
+              <div key={metric.label}>
+                {metric.label}:{' '}
+                <b>{metric.value}</b>
+                <HoverInfo text={metric.description} />
+              </div>
+            ))}
+          </div>
         </Card>
       </div>
 
@@ -210,6 +270,8 @@ function Dashboard() {
                   weight={position.weight}
                   sector={position.sector}
                   unrealizedPnL={position.unrealizedPnL}
+                  currentPrice={position.currentPrice}
+                  estimatedShares={position.estimatedShares}
                 />
               ))}
             </div>

@@ -1,8 +1,9 @@
-"use client";
+'use client';
 
-import React, { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { tokenStore } from "../lib/tokens";
+import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { tokenStore } from '../lib/tokens';
+import { LoadingScreen } from './LoadingScreen';
 
 export function RequireAuth({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -16,7 +17,7 @@ export function RequireAuth({ children }: { children: React.ReactNode }) {
       setIsAuthed(authed);
       setChecked(true);
       if (!authed) {
-        router.replace("/auth/login");
+        router.replace('/auth/login');
       }
     };
 
@@ -26,9 +27,8 @@ export function RequireAuth({ children }: { children: React.ReactNode }) {
   }, [router]);
 
   if (!checked || !isAuthed) {
-    return <div className="text-(--muted)">Loading…</div>;
+    return <LoadingScreen />;
   }
 
   return <>{children}</>;
 }
-
