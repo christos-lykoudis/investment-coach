@@ -1,0 +1,255 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id                    String    @id @default(uuid())
+  email                 String    @unique
+  passwordHash          String
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  onboardingCompletedAt DateTime?
+
+  preferences       UserPreferences?
+  refreshTokens     UserRefreshToken[]
+  brokerConnections BrokerConnection[]
+
+  @@map("users")
+}
+
+model UserPreferences {
+  userId            String   @id
+  timeHorizon       String
+  riskTolerance     String
+  volatilityComfort String
+  goalType          String
+  experienceLevel   String
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_preferences")
+}
+
+model UserRefreshToken {
+  id        String    @id @default(uuid())
+  userId    String
+  tokenHash String
+  createdAt DateTime  @default(now())
+  expiresAt DateTime
+  revokedAt DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("user_refresh_tokens")
+}
+
+model BrokerConnection {
+  id                   String    @id @default(uuid())
+  userId               String
+  provider             String // e.g. "snaptrade"
+  providerConnectionId String
+  externalUserId       String?
+  status               String // "pending" | "connected" | "disconnected"
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+  lastSyncedAt         DateTime?
+  lastSyncAttemptAt    DateTime?
+  lastSyncStatus       String?
+  lastSyncError        String?
+  authExpiresAt        DateTime?
+  revokedAt            DateTime?
+  syncCursor           String?
+  encryptedAccessToken String?
+  encryptedRefreshToken String?
+  providerMetadata     Json?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  brokerAccounts     BrokerAccount[]
+  riskSnapshots      RiskSnapshot[]
+  portfolioSnapshots PortfolioSnapshot[]
+  syncRuns           BrokerSyncRun[]
+
+  @@index([userId])
+  @@index([status, lastSyncStatus])
+  @@map("broker_connections")
+}
+
+model BrokerSyncRun {
+  id                 String   @id @default(uuid())
+  brokerConnectionId String
+  trigger            String // "connect_finalize" | "manual" | "scheduled"
+  status             String // "running" | "succeeded" | "failed"
+  startedAt          DateTime @default(now())
+  completedAt        DateTime?
+  errorMessage       String?
+
+  brokerConnection BrokerConnection @relation(fields: [brokerConnectionId], references: [id], onDelete: Cascade)
+
+  @@index([brokerConnectionId, startedAt])
+  @@map("broker_sync_runs")
+}
+
+model BrokerAccount {
+  id                 String   @id @default(uuid())
+  brokerConnectionId String
+  providerAccountId  String
+  name               String
+  accountType        String?
+  createdAt          DateTime @default(now())
+
+  brokerConnection BrokerConnection @relation(fields: [brokerConnectionId], references: [id], onDelete: Cascade)
+
+  @@index([brokerConnectionId])
+  @@map("broker_accounts")
+}
+
+model PortfolioSnapshot {
+  id                 String   @id @default(uuid())
+  brokerConnectionId String
+  userId             String
+  asOf               DateTime @default(now())
+
+  totalValue   Float
+  totalPnL     Float
+  cash         Float
+  accountCount Int
+
+  createdAt DateTime @default(now())
+
+  brokerConnection BrokerConnection   @relation(fields: [brokerConnectionId], references: [id], onDelete: Cascade)
+  positions        PositionSnapshot[]
+  transactions     Transaction[]
+  riskSnapshot     RiskSnapshot?
+
+  @@index([userId, asOf])
+  @@map("portfolio_snapshots")
+}
+
+model PositionSnapshot {
+  id                  String  @id @default(uuid())
+  portfolioSnapshotId String
+  symbol              String
+  sector              String?
+  weight              Float
+  marketValue         Float
+  unrealizedPnL       Float
+
+  portfolioSnapshot PortfolioSnapshot @relation(fields: [portfolioSnapshotId], references: [id], onDelete: Cascade)
+
+  @@index([portfolioSnapshotId])
+  @@map("position_snapshots")
+}
+
+model Transaction {
+  id                  String   @id @default(uuid())
+  portfolioSnapshotId String
+  brokerConnectionId  String
+  userId              String
+  date                DateTime
+  symbol              String?
+  transactionType     String
+  amount              Float
+  description         String?
+
+  portfolioSnapshot PortfolioSnapshot @relation(fields: [portfolioSnapshotId], references: [id], onDelete: Cascade)
+
+  @@index([userId, date])
+  @@map("transactions")
+}
+
+model RiskSnapshot {
+  id                 String   @id @default(uuid())
+  userId             String
+  brokerConnectionId String
+  createdAt          DateTime @default(now())
+
+  concentrationScore   Float
+  sectorConcentration  Float
+  topHoldingWeight     Float
+  volatilityEstimate   Float
+  drawdownEstimate     Float
+  diversificationScore Float
+
+  portfolioSnapshotId String? @unique
+
+  alerts RiskAlert[]
+
+  portfolioSnapshot PortfolioSnapshot? @relation(fields: [portfolioSnapshotId], references: [id], onDelete: SetNull)
+  brokerConnection  BrokerConnection   @relation(fields: [brokerConnectionId], references: [id])
+
+  @@index([userId, createdAt])
+  @@map("risk_snapshots")
+}
+
+model RiskAlert {
+  id               String   @id @default(uuid())
+  userId           String
+  riskSnapshotId   String
+  type             String
+  severity         String // "low" | "medium" | "high"
+  title            String
+  description      String
+  confidence       Float
+  assumptions      Json
+  possibleDownside String?
+  createdAt        DateTime @default(now())
+
+  riskSnapshot RiskSnapshot @relation(fields: [riskSnapshotId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("risk_alerts")
+}
+
+model CoachRecommendation {
+  id                 String   @id @default(uuid())
+  userId             String
+  recommendationType String // e.g. "behavior_pattern" | "risk_nudge"
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  title       String
+  content     Json
+  dismissedAt DateTime?
+
+  feedback RecommendationFeedback?
+
+  @@index([userId, createdAt])
+  @@map("coach_recommendations")
+}
+
+model RecommendationFeedback {
+  id               String   @id @default(uuid())
+  recommendationId String   @unique
+  userId           String
+  feedbackType     String // "helpful" | "dismissed" | "not_relevant"
+  createdAt        DateTime @default(now())
+  notes            String?
+
+  recommendation CoachRecommendation @relation(fields: [recommendationId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("recommendation_feedback")
+}
+
+model WeeklyBrief {
+  id                 String   @id @default(uuid())
+  userId             String
+  brokerConnectionId String?
+  generatedAt        DateTime @default(now())
+
+  summary            String
+  topChanges         Json
+  risksToWatch       Json
+  recommendedActions Json
+
+  @@index([userId, generatedAt])
+  @@map("weekly_briefs")
+}

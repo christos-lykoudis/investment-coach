@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "skills": {
+    "authoring-skills": {
+      "source": "vercel/next.js",
+      "sourceType": "github",
+      "computedHash": "38eb8cbf9e1739429a233e57196faa92a7d1436940e121776df17b808e44652a"
+    },
+    "router-act": {
+      "source": "vercel/next.js",
+      "sourceType": "github",
+      "computedHash": "e4ddba28b80deea6f9c7d5ec804f0cd0198beb2fcc90bb37e985980a2a7c41c4"
+    },
+    "write-api-reference": {
+      "source": "vercel/next.js",
+      "sourceType": "github",
+      "computedHash": "4d0a62b91470170ba15620ea4355e4ea6e712d4937c6046f2050359a3bb5ec8c"
+    },
+    "write-guide": {
+      "source": "vercel/next.js",
+      "sourceType": "github",
+      "computedHash": "9d19ed82bf178aa52d510caca6718daaa14048f76673cb1312449faf85c4e31f"
+    }
+  }
+}

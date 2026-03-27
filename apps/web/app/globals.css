@@ -1,0 +1,89 @@
+@import "tailwindcss";
+
+:root{
+  --bg: #060a14;
+  --surface: #0d1424;
+  --surface-elevated: #131d31;
+  --text: #eef2ff;
+  --muted: #9aa6bf;
+  --border: #22314d;
+  --accent: #4f8cff;
+  --accent-2: #00d7ff;
+  --success: #22c55e;
+  --danger: #f43f5e;
+  --warning: #f59e0b;
+}
+
+html, body{
+  min-height: 100%;
+}
+
+html{
+  background:
+    radial-gradient(circle at 15% -20%, rgba(79, 140, 255, 0.24), transparent 40%),
+    radial-gradient(circle at 90% 0%, rgba(0, 215, 255, 0.14), transparent 35%),
+    var(--bg);
+}
+
+body{
+  margin: 0;
+  background: transparent;
+  color: var(--text);
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+}
+
+a{
+  color: inherit;
+}
+
+h1 {
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.05;
+  margin: 0;
+  padding: 0;
+  color: var(--text);
+}
+
+input,
+select,
+textarea{
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  outline: none;
+}
+
+input:focus,
+select:focus,
+textarea:focus{
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(79, 140, 255, 0.2);
+}
+
+.stat-positive{
+  color: var(--success);
+}
+
+.stat-negative{
+  color: var(--danger);
+}
+
+.badge-warning{
+  color: #ffd18a;
+  background: rgba(245, 158, 11, 0.16);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+}
+
+.badge-danger{
+  color: #ff9ab0;
+  background: rgba(244, 63, 94, 0.16);
+  border: 1px solid rgba(244, 63, 94, 0.4);
+}
+
+.badge-success{
+  color: #a6f4bf;
+  background: rgba(34, 197, 94, 0.16);
+  border: 1px solid rgba(34, 197, 94, 0.4);
+}
+
